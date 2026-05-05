@@ -50,7 +50,7 @@ header {
 }
 
 header h1 {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: 600;
     background: linear-gradient(to right, #818cf8, #38bdf8);
     -webkit-background-clip: text;
@@ -62,7 +62,7 @@ header h1 {
 
 header p {
     color: var(--text-secondary);
-    font-size: 1.1rem;
+    font-size: 0.9rem;
 }
 
 .main-content {
@@ -87,7 +87,7 @@ header p {
 
 .input-section {
     flex: 1;
-    max-width: 450px;
+    max-width: 300px;
     gap: 1.5rem;
 }
 
@@ -160,7 +160,8 @@ input[type="file"] {
     background: rgba(15, 23, 42, 0.6);
     border: 1px dashed var(--panel-border);
     border-radius: 0.5rem;
-    padding: 1.5rem;
+    padding: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -171,7 +172,7 @@ input[type="file"] {
 }
 
 .upload-icon {
-    font-size: 1.5rem;
+    font-size: 1.2rem;
 }
 
 button {
@@ -416,3 +417,183 @@ button {
         min-height: 500px;
     }
 }
+
+/* View Toggle */
+.view-toggle {
+    display: flex;
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--panel-border);
+}
+
+.toggle-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    border-radius: 0;
+    flex: 1;
+}
+
+.toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-btn.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+.icon-btn {
+    font-size: 1.2rem;
+    padding: 0.2rem 0.6rem;
+    line-height: 1;
+}
+
+/* Graph Container */
+#graph-container {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    position: relative;
+    cursor: grab;
+}
+
+#graph-container:active {
+    cursor: grabbing;
+}
+
+.graph-wrapper {
+    transform-origin: top center;
+    transition: transform 0.1s;
+    min-width: 100%;
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    padding-top: 2rem;
+    padding-bottom: 4rem;
+}
+
+/* Org Chart Tree Layout */
+.org-tree {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.org-tree ul {
+    padding-top: 20px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    list-style-type: none;
+    padding-left: 0;
+}
+
+.org-tree ul.collapsed {
+    display: none;
+}
+
+.org-tree li {
+    float: left;
+    text-align: center;
+    position: relative;
+    padding: 20px 5px 0 5px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Connectors */
+.org-tree li::before, .org-tree li::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 50%;
+    border-top: 2px solid #22c55e; /* Green matching user image */
+    width: 50%;
+    height: 20px;
+}
+.org-tree li::after {
+    right: auto;
+    left: 50%;
+    border-left: 2px solid #22c55e;
+}
+
+/* Remove left connector from first child and right from last child */
+.org-tree li:only-child::after, .org-tree li:only-child::before {
+    display: none;
+}
+.org-tree li:only-child {
+    padding-top: 0;
+}
+.org-tree li:first-child::before, .org-tree li:last-child::after {
+    border: 0 none;
+}
+
+/* Add back connector vertical line to first and last */
+.org-tree li:last-child::before {
+    border-right: 2px solid #22c55e;
+    border-radius: 0 5px 0 0;
+}
+.org-tree li:first-child::after {
+    border-radius: 5px 0 0 0;
+}
+
+/* Downward line from parent */
+.org-tree ul::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    border-left: 2px solid #22c55e;
+    width: 0;
+    height: 20px;
+    margin-left: -1px;
+}
+
+/* Graph Nodes */
+.graph-node {
+    border: 2px solid #22c55e;
+    border-radius: 8px; /* Rectangular with border-radius */
+    padding: 8px 16px;
+    background: var(--bg-color);
+    color: var(--text-primary);
+    display: inline-block;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    min-width: 120px;
+}
+
+.graph-node:hover {
+    background: rgba(34, 197, 94, 0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px -1px rgba(0, 0, 0, 0.6);
+}
+
+.graph-node.has-children {
+    border-width: 3px;
+}
+
+.graph-node .node-content {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 4px;
+    word-break: break-word;
+    max-width: 250px;
+}
+
+.graph-node .node-type {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Primitive Value Colors in Graph */
+.graph-node .val-string { color: var(--syntax-string); }
+.graph-node .val-num { color: var(--syntax-number); }
+.graph-node .val-bool { color: var(--syntax-boolean); }
+.graph-node .val-null { color: var(--syntax-null); font-style: italic; }

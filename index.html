@@ -44,14 +44,24 @@
 
             <section class="output-section glass-panel">
                 <div class="output-header">
-                    <h2>Tree View</h2>
+                    <div class="view-toggle">
+                        <button id="view-list-btn" class="toggle-btn active">List View</button>
+                        <button id="view-graph-btn" class="toggle-btn">Graph View</button>
+                    </div>
                     <div class="tree-controls">
+                        <button id="zoom-in-btn" class="secondary-btn icon-btn hidden" title="Zoom In">+</button>
+                        <button id="zoom-out-btn" class="secondary-btn icon-btn hidden" title="Zoom Out">-</button>
                         <button id="expand-all-btn" class="secondary-btn">Expand All</button>
                         <button id="collapse-all-btn" class="secondary-btn">Collapse All</button>
                     </div>
                 </div>
                 <div id="tree-container" class="tree-container">
-                    <div class="empty-state">Tree will be rendered here</div>
+                    <div id="list-container">
+                        <div class="empty-state">Tree will be rendered here</div>
+                    </div>
+                    <div id="graph-container" class="hidden">
+                        <div id="graph-wrapper" class="graph-wrapper"></div>
+                    </div>
                 </div>
             </section>
         </main>

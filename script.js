@@ -7,7 +7,67 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMessage = document.getElementById('error-message');
     const expandAllBtn = document.getElementById('expand-all-btn');
     const collapseAllBtn = document.getElementById('collapse-all-btn');
+
+    const viewListBtn = document.getElementById('view-list-btn');
+    const viewGraphBtn = document.getElementById('view-graph-btn');
+    const listContainer = document.getElementById('list-container');
+    const graphContainer = document.getElementById('graph-container');
+    const graphWrapper = document.getElementById('graph-wrapper');
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+
     let currentJsonData = null;
+    let currentView = 'list';
+    let currentScale = 1;
+
+    // View Toggle Handlers
+    viewListBtn.addEventListener('click', () => {
+        currentView = 'list';
+        viewListBtn.classList.add('active');
+        viewGraphBtn.classList.remove('active');
+        listContainer.classList.remove('hidden');
+        graphContainer.classList.add('hidden');
+        zoomInBtn.classList.add('hidden');
+        zoomOutBtn.classList.add('hidden');
+    });
+
+    viewGraphBtn.addEventListener('click', () => {
+        currentView = 'graph';
+        viewGraphBtn.classList.add('active');
+        viewListBtn.classList.remove('active');
+        graphContainer.classList.remove('hidden');
+        listContainer.classList.add('hidden');
+        zoomInBtn.classList.remove('hidden');
+        zoomOutBtn.classList.remove('hidden');
+    });
+
+    // Zoom Handlers
+    function applyZoom() {
+        graphWrapper.style.transform = `scale(${currentScale})`;
+    }
+
+    zoomInBtn.addEventListener('click', () => {
+        currentScale = Math.min(currentScale + 0.1, 3);
+        applyZoom();
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+        currentScale = Math.max(currentScale - 0.1, 0.2);
+        applyZoom();
+    });
+
+    graphContainer.addEventListener('wheel', (e) => {
+        if (currentView === 'graph') {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                currentScale = Math.min(currentScale + 0.05, 3);
+            } else {
+                currentScale = Math.max(currentScale - 0.05, 0.2);
+            }
+            applyZoom();
+        }
+    }, { passive: false });
+
     // File Upload Handler
     fileInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -47,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hideError();
             currentJsonData = parsedData;
             renderTree(parsedData);
+            renderGraph(parsedData);
         } catch (error) {
             showError('Invalid JSON format. Please check your data.');
         }
@@ -60,9 +121,9 @@ document.addEventListener('DOMContentLoaded', () => {
         errorMessage.textContent = '';
     }
     function renderTree(data) {
-        treeContainer.innerHTML = '';
+        listContainer.innerHTML = '';
         const rootElement = createTreeNode(data, null, true);
-        treeContainer.appendChild(rootElement);
+        listContainer.appendChild(rootElement);
     }
     function createTreeNode(value, key = null, isRoot = false, isLast = true) {
         const nodeDiv = document.createElement('div');
@@ -185,8 +246,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Expand / Collapse All
     expandAllBtn.addEventListener('click', () => {
         if (!currentJsonData) return;
-        const children = treeContainer.querySelectorAll('.tree-children');
-        const carets = treeContainer.querySelectorAll('.tree-caret:not(.hidden)');
+        const children = listContainer.querySelectorAll('.tree-children');
+        const carets = listContainer.querySelectorAll('.tree-caret:not(.hidden)');
 
         children.forEach(child => {
             child.classList.remove('collapsed');
@@ -206,12 +267,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         carets.forEach(caret => caret.classList.add('expanded'));
+        
+        if (graphWrapper) {
+            const graphUls = graphWrapper.querySelectorAll('ul.collapsed');
+            graphUls.forEach(ul => ul.classList.remove('collapsed'));
+        }
     });
     collapseAllBtn.addEventListener('click', () => {
         if (!currentJsonData) return;
 
-        const children = treeContainer.querySelectorAll('.tree-children');
-        const carets = treeContainer.querySelectorAll('.tree-caret:not(.hidden)');
+        const children = listContainer.querySelectorAll('.tree-children');
+        const carets = listContainer.querySelectorAll('.tree-caret:not(.hidden)');
 
         children.forEach(child => {
             child.classList.add('collapsed');
@@ -233,7 +299,106 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         carets.forEach(caret => caret.classList.remove('expanded'));
+        
+        if (graphWrapper) {
+            const graphUls = graphWrapper.querySelectorAll('.org-tree > ul ul');
+            graphUls.forEach(ul => ul.classList.add('collapsed'));
+        }
     });
+
+    function renderGraph(data) {
+        graphWrapper.innerHTML = '';
+        const orgTreeDiv = document.createElement('div');
+        orgTreeDiv.className = 'org-tree';
+        const rootUl = document.createElement('ul');
+        const rootLi = createGraphNode(data, 'JSON File', true);
+        rootUl.appendChild(rootLi);
+        orgTreeDiv.appendChild(rootUl);
+        graphWrapper.appendChild(orgTreeDiv);
+        
+        // Reset scale on new render
+        currentScale = 1;
+        applyZoom();
+    }
+
+    function createGraphNode(value, key = null, isRoot = false) {
+        const li = document.createElement('li');
+        
+        const nodeDiv = document.createElement('div');
+        nodeDiv.className = 'graph-node';
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'node-content';
+        
+        const typeDiv = document.createElement('div');
+        typeDiv.className = 'node-type';
+
+        const isObject = typeof value === 'object' && value !== null;
+        const isArray = Array.isArray(value);
+        
+        let typeStr = '';
+        let contentStr = '';
+        
+        if (isRoot) {
+            contentStr = key || 'JSON File';
+            typeStr = isArray ? 'ARRAY' : (isObject ? 'OBJECT' : typeof value);
+        } else if (isArray) {
+            contentStr = key !== null ? `"${key}": [ ${value.length} Items ]` : `[ ${value.length} Items ]`;
+            typeStr = 'ARRAY';
+            nodeDiv.classList.add('has-children');
+        } else if (isObject) {
+            const keys = Object.keys(value);
+            contentStr = key !== null ? `"${key}": { ${keys.length} Keys }` : `{ ${keys.length} Keys }`;
+            typeStr = 'OBJECT';
+            nodeDiv.classList.add('has-children');
+        } else {
+            if (typeof value === 'string') {
+                const escaped = value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                contentStr = key !== null ? `"${key}": "${escaped}"` : `"${escaped}"`;
+                contentStr = `<span class="val-string">${contentStr}</span>`;
+                typeStr = 'STRING';
+            } else if (typeof value === 'number') {
+                contentStr = key !== null ? `"${key}": ${value}` : `${value}`;
+                contentStr = `<span class="val-num">${contentStr}</span>`;
+                typeStr = 'NUM';
+            } else if (typeof value === 'boolean') {
+                contentStr = key !== null ? `"${key}": ${value}` : `${value}`;
+                contentStr = `<span class="val-bool">${contentStr}</span>`;
+                typeStr = 'BOOLEAN';
+            } else if (value === null) {
+                contentStr = key !== null ? `"${key}": null` : `null`;
+                contentStr = `<span class="val-null">${contentStr}</span>`;
+                typeStr = 'NULL';
+            }
+        }
+        
+        contentDiv.innerHTML = contentStr;
+        typeDiv.textContent = typeStr;
+        
+        nodeDiv.appendChild(contentDiv);
+        nodeDiv.appendChild(typeDiv);
+        li.appendChild(nodeDiv);
+        
+        if (isObject) {
+            const keys = Object.keys(value);
+            if (keys.length > 0) {
+                const childrenUl = document.createElement('ul');
+                keys.forEach(k => {
+                    const childLi = createGraphNode(value[k], isArray ? null : k, false);
+                    childrenUl.appendChild(childLi);
+                });
+                li.appendChild(childrenUl);
+                
+                nodeDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    childrenUl.classList.toggle('collapsed');
+                });
+            }
+        }
+        
+        return li;
+    }
+
     // Initial render with a sample
     jsonInput.value = JSON.stringify({
         "project": "JSON Tree Viewer",
