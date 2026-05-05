@@ -455,12 +455,15 @@ button {
 #graph-container {
     width: 100%;
     height: 100%;
-    overflow: auto;
+    overflow: hidden;
+    /* Changed to hidden since we translate now */
     position: relative;
     cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
-#graph-container:active {
+#graph-container.grabbing {
     cursor: grabbing;
 }
 
@@ -506,15 +509,18 @@ button {
 }
 
 /* Connectors */
-.org-tree li::before, .org-tree li::after {
+.org-tree li::before,
+.org-tree li::after {
     content: '';
     position: absolute;
     top: 0;
     right: 50%;
-    border-top: 2px solid #22c55e; /* Green matching user image */
+    border-top: 2px solid #22c55e;
+    /* Green matching user image */
     width: 50%;
     height: 20px;
 }
+
 .org-tree li::after {
     right: auto;
     left: 50%;
@@ -522,13 +528,17 @@ button {
 }
 
 /* Remove left connector from first child and right from last child */
-.org-tree li:only-child::after, .org-tree li:only-child::before {
+.org-tree li:only-child::after,
+.org-tree li:only-child::before {
     display: none;
 }
+
 .org-tree li:only-child {
     padding-top: 0;
 }
-.org-tree li:first-child::before, .org-tree li:last-child::after {
+
+.org-tree li:first-child::before,
+.org-tree li:last-child::after {
     border: 0 none;
 }
 
@@ -537,6 +547,7 @@ button {
     border-right: 2px solid #22c55e;
     border-radius: 0 5px 0 0;
 }
+
 .org-tree li:first-child::after {
     border-radius: 5px 0 0 0;
 }
@@ -553,10 +564,16 @@ button {
     margin-left: -1px;
 }
 
+/* Remove downward line for the root ul */
+.org-tree>ul::before {
+    display: none;
+}
+
 /* Graph Nodes */
 .graph-node {
     border: 2px solid #22c55e;
-    border-radius: 8px; /* Rectangular with border-radius */
+    border-radius: 8px;
+    /* Rectangular with border-radius */
     padding: 8px 16px;
     background: var(--bg-color);
     color: var(--text-primary);
@@ -593,7 +610,19 @@ button {
 }
 
 /* Primitive Value Colors in Graph */
-.graph-node .val-string { color: var(--syntax-string); }
-.graph-node .val-num { color: var(--syntax-number); }
-.graph-node .val-bool { color: var(--syntax-boolean); }
-.graph-node .val-null { color: var(--syntax-null); font-style: italic; }
+.graph-node .val-string {
+    color: var(--syntax-string);
+}
+
+.graph-node .val-num {
+    color: var(--syntax-number);
+}
+
+.graph-node .val-bool {
+    color: var(--syntax-boolean);
+}
+
+.graph-node .val-null {
+    color: var(--syntax-null);
+    font-style: italic;
+}

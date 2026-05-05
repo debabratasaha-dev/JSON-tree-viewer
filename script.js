@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentJsonData = null;
     let currentView = 'list';
     let currentScale = 1;
+    let translateX = 0;
+    let translateY = 0;
 
     // View Toggle Handlers
     viewListBtn.addEventListener('click', () => {
@@ -43,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Zoom Handlers
     function applyZoom() {
-        graphWrapper.style.transform = `scale(${currentScale})`;
+        graphWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
     }
 
     zoomInBtn.addEventListener('click', () => {
@@ -67,6 +69,44 @@ document.addEventListener('DOMContentLoaded', () => {
             applyZoom();
         }
     }, { passive: false });
+
+    // Drag to Pan Handlers
+    let isDragging = false;
+    let startX, startY;
+    let initialTranslateX, initialTranslateY;
+
+    graphContainer.addEventListener('mousedown', (e) => {
+        if (currentView !== 'graph') return;
+        isDragging = true;
+        graphContainer.classList.add('grabbing');
+        startX = e.pageX;
+        startY = e.pageY;
+        initialTranslateX = translateX;
+        initialTranslateY = translateY;
+    });
+
+    graphContainer.addEventListener('mouseleave', () => {
+        isDragging = false;
+        graphContainer.classList.remove('grabbing');
+    });
+
+    graphContainer.addEventListener('mouseup', () => {
+        isDragging = false;
+        graphContainer.classList.remove('grabbing');
+    });
+
+    graphContainer.addEventListener('mousemove', (e) => {
+        if (!isDragging || currentView !== 'graph') return;
+        e.preventDefault();
+        const x = e.pageX;
+        const y = e.pageY;
+        const walkX = x - startX;
+        const walkY = y - startY;
+        
+        translateX = initialTranslateX + walkX;
+        translateY = initialTranslateY + walkY;
+        applyZoom();
+    });
 
     // File Upload Handler
     fileInput.addEventListener('change', (e) => {
@@ -267,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         carets.forEach(caret => caret.classList.add('expanded'));
-        
+
         if (graphWrapper) {
             const graphUls = graphWrapper.querySelectorAll('ul.collapsed');
             graphUls.forEach(ul => ul.classList.remove('collapsed'));
@@ -299,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         carets.forEach(caret => caret.classList.remove('expanded'));
-        
+
         if (graphWrapper) {
             const graphUls = graphWrapper.querySelectorAll('.org-tree > ul ul');
             graphUls.forEach(ul => ul.classList.add('collapsed'));
@@ -315,30 +355,32 @@ document.addEventListener('DOMContentLoaded', () => {
         rootUl.appendChild(rootLi);
         orgTreeDiv.appendChild(rootUl);
         graphWrapper.appendChild(orgTreeDiv);
-        
-        // Reset scale on new render
+
+        // Reset scale and translation on new render
         currentScale = 1;
+        translateX = 0;
+        translateY = 0;
         applyZoom();
     }
 
     function createGraphNode(value, key = null, isRoot = false) {
         const li = document.createElement('li');
-        
+
         const nodeDiv = document.createElement('div');
         nodeDiv.className = 'graph-node';
-        
+
         const contentDiv = document.createElement('div');
         contentDiv.className = 'node-content';
-        
+
         const typeDiv = document.createElement('div');
         typeDiv.className = 'node-type';
 
         const isObject = typeof value === 'object' && value !== null;
         const isArray = Array.isArray(value);
-        
+
         let typeStr = '';
         let contentStr = '';
-        
+
         if (isRoot) {
             contentStr = key || 'JSON File';
             typeStr = isArray ? 'ARRAY' : (isObject ? 'OBJECT' : typeof value);
@@ -371,14 +413,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 typeStr = 'NULL';
             }
         }
-        
+
         contentDiv.innerHTML = contentStr;
         typeDiv.textContent = typeStr;
-        
+
         nodeDiv.appendChild(contentDiv);
         nodeDiv.appendChild(typeDiv);
         li.appendChild(nodeDiv);
-        
+
         if (isObject) {
             const keys = Object.keys(value);
             if (keys.length > 0) {
@@ -388,14 +430,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     childrenUl.appendChild(childLi);
                 });
                 li.appendChild(childrenUl);
-                
+
                 nodeDiv.addEventListener('click', (e) => {
                     e.stopPropagation();
                     childrenUl.classList.toggle('collapsed');
                 });
             }
         }
-        
+
         return li;
     }
 
