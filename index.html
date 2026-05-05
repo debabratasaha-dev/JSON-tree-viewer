@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Tree Viewer</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>JSON Tree Viewer</h1>
+            <p>Visualize your JSON data dynamically</p>
+        </header>
+
+        <main class="main-content">
+            <section class="input-section glass-panel">
+                <div class="input-group" style="flex: 2;">
+                    <label for="json-input">Paste JSON</label>
+                    <textarea id="json-input" placeholder='{"key": "value"}'></textarea>
+                </div>
+
+                <div class="divider">
+                    <span>OR</span>
+                </div>
+
+                <div class="input-group" style="flex: 0;">
+                    <label class="file-upload-label" for="file-input">
+                        <span class="upload-icon">📁</span>
+                        <span id="file-name">Upload JSON File</span>
+                    </label>
+                    <input type="file" id="file-input" accept=".json,application/json">
+                </div>
+
+                <div id="error-message" class="error-message hidden"></div>
+
+                <button id="render-btn" class="primary-btn">Render Tree</button>
+            </section>
+
+            <section class="output-section glass-panel">
+                <div class="output-header">
+                    <h2>Tree View</h2>
+                    <div class="tree-controls">
+                        <button id="expand-all-btn" class="secondary-btn">Expand All</button>
+                        <button id="collapse-all-btn" class="secondary-btn">Collapse All</button>
+                    </div>
+                </div>
+                <div id="tree-container" class="tree-container">
+                    <div class="empty-state">Tree will be rendered here</div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
