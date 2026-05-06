@@ -236,11 +236,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Value or Bracket
         const valueSpan = document.createElement('span');
-        
-        // Type Pill
-        const pillSpan = document.createElement('span');
-        pillSpan.className = `type-pill type-pill-${typeClass}`;
-        pillSpan.textContent = typeStr;
 
         if (isObject) {
             const openBracket = isArray ? '[' : '{';
@@ -254,12 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 valueSpan.textContent = openBracket + closeBracket + (!isLast && !isRoot ? ',' : '');
                 caret.classList.add('hidden');
                 itemDiv.appendChild(valueSpan);
-                itemDiv.appendChild(pillSpan);
                 nodeDiv.appendChild(itemDiv);
             } else {
                 valueSpan.textContent = openBracket;
                 itemDiv.appendChild(valueSpan);
-                itemDiv.appendChild(pillSpan);
 
                 const countSpan = document.createElement('span');
                 countSpan.className = 'tree-bracket';
@@ -330,7 +323,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             itemDiv.appendChild(valueSpan);
-            itemDiv.appendChild(pillSpan);
             nodeDiv.appendChild(itemDiv);
         }
         return nodeDiv;
