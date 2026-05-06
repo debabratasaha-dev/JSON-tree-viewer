@@ -1,6 +1,6 @@
 :root {
     --bg-color: #0f172a;
-    --panel-bg: rgba(30, 41, 59, 0.7);
+    --panel-bg: rgba(30, 41, 59, 0.4);
     --panel-border: rgba(255, 255, 255, 0.1);
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
@@ -9,12 +9,51 @@
     --error-color: #ef4444;
     --tree-line: rgba(148, 163, 184, 0.3);
 
+    --sidebar-bg: rgba(15, 23, 42, 0.5);
+    --topbar-bg: rgba(30, 41, 59, 0.3);
+    --input-bg: rgba(15, 23, 42, 0.6);
+    --input-bg-hover: rgba(15, 23, 42, 0.8);
+    --btn-secondary-bg: rgba(255, 255, 255, 0.1);
+    --btn-secondary-hover: rgba(255, 255, 255, 0.2);
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --scroll-track: rgba(15, 23, 42, 0.4);
+    --scroll-thumb: rgba(148, 163, 184, 0.4);
+
     /* Syntax Highlighting */
     --syntax-key: #38bdf8;
     --syntax-string: #a7f3d0;
     --syntax-number: #fdba74;
     --syntax-boolean: #f472b6;
     --syntax-null: #94a3b8;
+}
+
+body.light-mode {
+    --bg-color: #f8fafc;
+    --panel-bg: rgba(255, 255, 255, 0.7);
+    --panel-border: rgba(0, 0, 0, 0.1);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --accent-color: #4f46e5;
+    --accent-hover: #4338ca;
+    --error-color: #dc2626;
+    --tree-line: rgba(15, 23, 42, 0.2);
+
+    --sidebar-bg: #e2e8f0;
+    --topbar-bg: #ffffff;
+    --input-bg: #ffffff;
+    --input-bg-hover: #f1f5f9;
+    --btn-secondary-bg: rgba(0, 0, 0, 0.05);
+    --btn-secondary-hover: rgba(0, 0, 0, 0.1);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --scroll-track: rgba(0, 0, 0, 0.05);
+    --scroll-thumb: rgba(0, 0, 0, 0.2);
+
+    /* Syntax Highlighting Light */
+    --syntax-key: #0284c7;
+    --syntax-string: #16a34a;
+    --syntax-number: #ea580c;
+    --syntax-boolean: #c026d3;
+    --syntax-null: #64748b;
 }
 
 * {
@@ -40,7 +79,7 @@ body {
 
 .sidebar {
     width: 340px;
-    background: rgba(15, 23, 42, 0.5);
+    background: var(--sidebar-bg);
     border-right: 1px solid var(--panel-border);
     display: flex;
     flex-direction: column;
@@ -72,6 +111,7 @@ body {
 
 .main-content {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     background-image:
@@ -85,7 +125,8 @@ body {
     align-items: center;
     padding: 1rem 1.5rem;
     border-bottom: 1px solid var(--panel-border);
-    background: rgba(30, 41, 59, 0.3);
+    background: var(--topbar-bg);
+    flex-shrink: 0;
 }
 
 .viewer-section {
@@ -95,7 +136,7 @@ body {
 }
 
 .glass-panel {
-    background: rgba(30, 41, 59, 0.4);
+    background: var(--panel-bg);
     border: 1px solid var(--panel-border);
     border-radius: 0.75rem;
     padding: 1.5rem;
@@ -124,7 +165,7 @@ body {
 
 textarea {
     flex: 1;
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--input-bg);
     border: 1px solid var(--panel-border);
     border-radius: 0.5rem;
     padding: 1rem;
@@ -169,7 +210,7 @@ input[type="file"] {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--input-bg);
     border: 1px dashed var(--panel-border);
     border-radius: 0.5rem;
     padding: 1rem;
@@ -180,7 +221,7 @@ input[type="file"] {
 
 .file-upload-label:hover {
     border-color: var(--accent-color);
-    background: rgba(15, 23, 42, 0.8);
+    background: var(--input-bg-hover);
 }
 
 .upload-icon {
@@ -215,14 +256,14 @@ button {
 }
 
 .secondary-btn {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--btn-secondary-bg);
     color: var(--text-primary);
     padding: 0.5rem 1rem;
     font-size: 0.85rem;
 }
 
 .secondary-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--btn-secondary-hover);
 }
 
 .error-message {
@@ -401,12 +442,12 @@ button {
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(15, 23, 42, 0.4);
+    background: var(--scroll-track);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.4);
+    background: var(--scroll-thumb);
     border-radius: 4px;
 }
 
@@ -434,7 +475,7 @@ button {
 /* View Toggle */
 .view-toggle {
     display: flex;
-    background: rgba(15, 23, 42, 0.6);
+    background: var(--input-bg);
     border-radius: 0.5rem;
     overflow: hidden;
     border: 1px solid var(--panel-border);
@@ -450,7 +491,7 @@ button {
 }
 
 .toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--btn-secondary-bg);
 }
 
 .toggle-btn.active {
@@ -593,14 +634,14 @@ button {
     display: inline-block;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 6px -1px var(--shadow-color);
     min-width: 120px;
 }
 
 .graph-node:hover {
     background: rgba(34, 197, 94, 0.1);
     transform: translateY(-2px);
-    box-shadow: 0 6px 10px -1px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 6px 10px -1px var(--shadow-color);
 }
 
 .graph-node.has-children {

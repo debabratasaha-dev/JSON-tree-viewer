@@ -15,12 +15,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const graphWrapper = document.getElementById('graph-wrapper');
     const zoomInBtn = document.getElementById('zoom-in-btn');
     const zoomOutBtn = document.getElementById('zoom-out-btn');
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
 
     let currentJsonData = null;
     let currentView = 'list';
     let currentScale = 1;
     let translateX = 0;
     let translateY = 0;
+
+    // Theme Toggle Handler
+    themeToggleBtn.addEventListener('click', () => {
+        document.body.classList.toggle('light-mode');
+        if (document.body.classList.contains('light-mode')) {
+            themeToggleBtn.textContent = '🌙';
+            themeToggleBtn.title = 'Toggle Dark Mode';
+        } else {
+            themeToggleBtn.textContent = '☀️';
+            themeToggleBtn.title = 'Toggle Light Mode';
+        }
+    });
 
     // View Toggle Handlers
     viewListBtn.addEventListener('click', () => {
