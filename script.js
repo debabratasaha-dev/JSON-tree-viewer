@@ -165,13 +165,48 @@ document.addEventListener('DOMContentLoaded', () => {
         const rootElement = createTreeNode(data, null, true);
         listContainer.appendChild(rootElement);
     }
-    function createTreeNode(value, key = null, isRoot = false, isLast = true) {
+    function createTreeNode(value, key = null, isRoot = false, isLast = true, parentIsArray = false) {
         const nodeDiv = document.createElement('div');
         nodeDiv.className = isRoot ? 'tree-root' : 'tree-node';
         const itemDiv = document.createElement('div');
         itemDiv.className = 'tree-item';
         const isObject = typeof value === 'object' && value !== null;
         const isArray = Array.isArray(value);
+
+        // Determine type string and icon
+        let typeStr = '';
+        let iconStr = '';
+        let typeClass = '';
+        
+        if (isArray) {
+            typeStr = 'ARRAY';
+            iconStr = '[]';
+            typeClass = 'array';
+        } else if (isObject) {
+            typeStr = 'OBJECT';
+            iconStr = '{}';
+            typeClass = 'object';
+        } else if (typeof value === 'string') {
+            typeStr = 'STRING';
+            iconStr = 'T';
+            typeClass = 'string';
+        } else if (typeof value === 'number') {
+            typeStr = 'NUMBER';
+            iconStr = '#';
+            typeClass = 'number';
+        } else if (typeof value === 'boolean') {
+            typeStr = 'BOOLEAN';
+            if (value === true) {
+                iconStr = `<svg width="18" height="10" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.4"/><circle cx="13" cy="5" r="3" fill="currentColor"/></svg>`;
+            } else {
+                iconStr = `<svg width="18" height="10" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.1"/><circle cx="5" cy="5" r="3" fill="currentColor" fill-opacity="0.5"/></svg>`;
+            }
+            typeClass = 'boolean';
+        } else if (value === null) {
+            typeStr = 'NULL';
+            iconStr = '∅';
+            typeClass = 'null';
+        }
 
         // Caret
         const caret = document.createElement('span');
@@ -184,15 +219,29 @@ document.addEventListener('DOMContentLoaded', () => {
             caret.innerHTML = '▶';
         }
         itemDiv.appendChild(caret);
+
+        // Icon
+        const iconSpan = document.createElement('span');
+        iconSpan.className = `type-icon type-icon-${typeClass}`;
+        iconSpan.innerHTML = iconStr;
+        itemDiv.appendChild(iconSpan);
+
         // Key
         if (key !== null) {
             const keySpan = document.createElement('span');
             keySpan.className = 'tree-key';
-            keySpan.textContent = `"${key}": `;
+            keySpan.textContent = parentIsArray ? `${key} : ` : `"${key}" : `;
             itemDiv.appendChild(keySpan);
         }
+
         // Value or Bracket
         const valueSpan = document.createElement('span');
+        
+        // Type Pill
+        const pillSpan = document.createElement('span');
+        pillSpan.className = `type-pill type-pill-${typeClass}`;
+        pillSpan.textContent = typeStr;
+
         if (isObject) {
             const openBracket = isArray ? '[' : '{';
             const closeBracket = isArray ? ']' : '}';
@@ -205,10 +254,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 valueSpan.textContent = openBracket + closeBracket + (!isLast && !isRoot ? ',' : '');
                 caret.classList.add('hidden');
                 itemDiv.appendChild(valueSpan);
+                itemDiv.appendChild(pillSpan);
                 nodeDiv.appendChild(itemDiv);
             } else {
                 valueSpan.textContent = openBracket;
                 itemDiv.appendChild(valueSpan);
+                itemDiv.appendChild(pillSpan);
 
                 const countSpan = document.createElement('span');
                 countSpan.className = 'tree-bracket';
@@ -222,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 childrenDiv.className = 'tree-children';
 
                 keys.forEach((k, index) => {
-                    const childNode = createTreeNode(value[k], isArray ? null : k, false, index === keys.length - 1);
+                    const childNode = createTreeNode(value[k], k, false, index === keys.length - 1, isArray);
                     childrenDiv.appendChild(childNode);
                 });
                 nodeDiv.appendChild(childrenDiv);
@@ -279,6 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             itemDiv.appendChild(valueSpan);
+            itemDiv.appendChild(pillSpan);
             nodeDiv.appendChild(itemDiv);
         }
         return nodeDiv;
@@ -293,8 +345,9 @@ document.addEventListener('DOMContentLoaded', () => {
             child.classList.remove('collapsed');
 
             const itemDiv = child.previousElementSibling;
-            const openBracketSpan = itemDiv.querySelector('.tree-bracket:first-of-type');
-            const countSpan = itemDiv.querySelector('.tree-bracket:nth-of-type(2)');
+            const treeBrackets = itemDiv.querySelectorAll('.tree-bracket');
+            const openBracketSpan = treeBrackets[0];
+            const countSpan = treeBrackets[1];
             const closeSpan = child.nextElementSibling;
 
             if (openBracketSpan && countSpan) {
@@ -323,8 +376,9 @@ document.addEventListener('DOMContentLoaded', () => {
             child.classList.add('collapsed');
 
             const itemDiv = child.previousElementSibling;
-            const openBracketSpan = itemDiv.querySelector('.tree-bracket:first-of-type');
-            const countSpan = itemDiv.querySelector('.tree-bracket:nth-of-type(2)');
+            const treeBrackets = itemDiv.querySelectorAll('.tree-bracket');
+            const openBracketSpan = treeBrackets[0];
+            const countSpan = treeBrackets[1];
             const closeSpan = child.nextElementSibling;
 
             if (openBracketSpan && countSpan) {
