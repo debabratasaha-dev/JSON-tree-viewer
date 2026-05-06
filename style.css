@@ -27,30 +27,35 @@ body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-primary);
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    background-image:
-        radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.15), transparent 25%),
-        radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.15), transparent 25%);
-    background-attachment: fixed;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
 }
 
-.app-container {
-    width: 100%;
-    max-width: 1400px;
-    padding: 2rem;
+.app-dashboard {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.sidebar {
+    width: 340px;
+    background: rgba(15, 23, 42, 0.5);
+    border-right: 1px solid var(--panel-border);
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    padding: 1.5rem;
+    gap: 1.5rem;
+    flex-shrink: 0;
+    overflow-y: auto;
 }
 
-header {
-    text-align: center;
+.sidebar-header {
+    text-align: left;
 }
 
-header h1 {
-    font-size: 1.8rem;
+.sidebar-header h1 {
+    font-size: 1.5rem;
     font-weight: 600;
     background: linear-gradient(to right, #818cf8, #38bdf8);
     -webkit-background-clip: text;
@@ -60,43 +65,50 @@ header h1 {
     margin-bottom: 0.5rem;
 }
 
-header p {
+.sidebar-header p {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .main-content {
+    flex: 1;
     display: flex;
-    gap: 2rem;
-    align-items: stretch;
-    height: calc(100vh - 150px);
-    min-height: 600px;
+    flex-direction: column;
+    background-image:
+        radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.1), transparent 25%),
+        radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.1), transparent 25%);
+}
+
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--panel-border);
+    background: rgba(30, 41, 59, 0.3);
+}
+
+.viewer-section {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
 }
 
 .glass-panel {
-    background: var(--panel-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: rgba(30, 41, 59, 0.4);
     border: 1px solid var(--panel-border);
-    border-radius: 1rem;
-    padding: 2rem;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
     display: flex;
     flex-direction: column;
 }
 
 .input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
     flex: 1;
-    max-width: 300px;
-    gap: 1.5rem;
 }
-
-.output-section {
-    flex: 2;
-    overflow: hidden;
-    /* Content will scroll inside tree-container */
-}
-
 .input-group {
     display: flex;
     flex-direction: column;
@@ -245,12 +257,9 @@ button {
 }
 
 .tree-container {
-    flex: 1;
+    height: 100%;
+    width: 100%;
     overflow: auto;
-    background: rgba(15, 23, 42, 0.6);
-    border: 1px solid var(--panel-border);
-    border-radius: 0.5rem;
-    padding: 1.5rem;
     font-family: 'Fira Code', monospace;
     font-size: 0.9rem;
     line-height: 1.6;

@@ -12,15 +12,15 @@
 </head>
 
 <body>
-    <div class="app-container">
-        <header>
-            <h1>JSON Tree Viewer</h1>
-            <p>Visualize your JSON data dynamically</p>
-        </header>
+    <div class="app-dashboard">
+        <aside class="sidebar">
+            <header class="sidebar-header">
+                <h1>JSON Tree Viewer</h1>
+                <p>Visualize your JSON data dynamically</p>
+            </header>
 
-        <main class="main-content">
             <section class="input-section glass-panel">
-                <div class="input-group" style="flex: 2;">
+                <div class="input-group">
                     <label for="json-input">Paste JSON</label>
                     <textarea id="json-input" placeholder='{"key": "value"}'></textarea>
                 </div>
@@ -29,7 +29,7 @@
                     <span>OR</span>
                 </div>
 
-                <div class="input-group" style="flex: 0;">
+                <div class="input-group">
                     <label class="file-upload-label" for="file-input">
                         <span class="upload-icon">📁</span>
                         <span id="file-name">Upload JSON File</span>
@@ -41,20 +41,23 @@
 
                 <button id="render-btn" class="primary-btn">Render Tree</button>
             </section>
+        </aside>
 
-            <section class="output-section glass-panel">
-                <div class="output-header">
-                    <div class="view-toggle">
-                        <button id="view-list-btn" class="toggle-btn active">List View</button>
-                        <button id="view-graph-btn" class="toggle-btn">Graph View</button>
-                    </div>
-                    <div class="tree-controls">
-                        <button id="zoom-in-btn" class="secondary-btn icon-btn hidden" title="Zoom In">+</button>
-                        <button id="zoom-out-btn" class="secondary-btn icon-btn hidden" title="Zoom Out">-</button>
-                        <button id="expand-all-btn" class="secondary-btn">Expand All</button>
-                        <button id="collapse-all-btn" class="secondary-btn">Collapse All</button>
-                    </div>
+        <main class="main-content">
+            <div class="top-bar">
+                <div class="view-toggle">
+                    <button id="view-list-btn" class="toggle-btn active">List View</button>
+                    <button id="view-graph-btn" class="toggle-btn">Graph View</button>
                 </div>
+                <div class="tree-controls">
+                    <button id="zoom-in-btn" class="secondary-btn icon-btn hidden" title="Zoom In">+</button>
+                    <button id="zoom-out-btn" class="secondary-btn icon-btn hidden" title="Zoom Out">-</button>
+                    <button id="expand-all-btn" class="secondary-btn">Expand All</button>
+                    <button id="collapse-all-btn" class="secondary-btn">Collapse All</button>
+                </div>
+            </div>
+
+            <div class="viewer-section">
                 <div id="tree-container" class="tree-container">
                     <div id="list-container">
                         <div class="empty-state">Tree will be rendered here</div>
@@ -63,7 +66,7 @@
                         <div id="graph-wrapper" class="graph-wrapper"></div>
                     </div>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
     <script src="script.js"></script>
