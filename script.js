@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
         applyZoom();
     }
 
-    function createGraphNode(value, key = null, isRoot = false) {
+    function createGraphNode(value, key = null, isRoot = false, parentIsArray = false) {
         const li = document.createElement('li');
 
         const nodeDiv = document.createElement('div');
@@ -433,43 +433,75 @@ document.addEventListener('DOMContentLoaded', () => {
         const isArray = Array.isArray(value);
 
         let typeStr = '';
+        let iconStr = '';
+        let typeClass = '';
+
+        if (isArray) {
+            typeStr = 'ARRAY';
+            iconStr = '[]';
+            typeClass = 'array';
+        } else if (isObject) {
+            typeStr = 'OBJECT';
+            iconStr = '{}';
+            typeClass = 'object';
+        } else if (typeof value === 'string') {
+            typeStr = 'STRING';
+            iconStr = 'T';
+            typeClass = 'string';
+        } else if (typeof value === 'number') {
+            typeStr = 'NUMBER';
+            iconStr = '#';
+            typeClass = 'number';
+        } else if (typeof value === 'boolean') {
+            typeStr = 'BOOLEAN';
+            if (value === true) {
+                iconStr = `<svg width="14" height="8" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon-graph"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.4"/><circle cx="13" cy="5" r="3" fill="currentColor"/></svg>`;
+            } else {
+                iconStr = `<svg width="14" height="8" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon-graph"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.1"/><circle cx="5" cy="5" r="3" fill="currentColor" fill-opacity="0.5"/></svg>`;
+            }
+            typeClass = 'boolean';
+        } else if (value === null) {
+            typeStr = 'NULL';
+            iconStr = '∅';
+            typeClass = 'null';
+        }
+
         let contentStr = '';
+        let keyDisplay = '';
+
+        if (key !== null && !isRoot) {
+            if (parentIsArray) {
+                keyDisplay = `<span class="tree-key">${key} : </span>`;
+            } else {
+                keyDisplay = `<span class="tree-key">"${key}": </span>`;
+            }
+        }
 
         if (isRoot) {
             contentStr = key || 'JSON File';
             typeStr = isArray ? 'ARRAY' : (isObject ? 'OBJECT' : typeof value);
         } else if (isArray) {
-            contentStr = key !== null ? `"${key}": [ ${value.length} Items ]` : `[ ${value.length} Items ]`;
-            typeStr = 'ARRAY';
+            contentStr = keyDisplay + `[ ${value.length} Items ]`;
             nodeDiv.classList.add('has-children');
         } else if (isObject) {
             const keys = Object.keys(value);
-            contentStr = key !== null ? `"${key}": { ${keys.length} Keys }` : `{ ${keys.length} Keys }`;
-            typeStr = 'OBJECT';
+            contentStr = keyDisplay + `{ ${keys.length} Keys }`;
             nodeDiv.classList.add('has-children');
         } else {
             if (typeof value === 'string') {
                 const escaped = value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                contentStr = key !== null ? `"${key}": "${escaped}"` : `"${escaped}"`;
-                contentStr = `<span class="val-string">${contentStr}</span>`;
-                typeStr = 'STRING';
+                contentStr = keyDisplay + `<span class="val-string">"${escaped}"</span>`;
             } else if (typeof value === 'number') {
-                contentStr = key !== null ? `"${key}": ${value}` : `${value}`;
-                contentStr = `<span class="val-num">${contentStr}</span>`;
-                typeStr = 'NUM';
+                contentStr = keyDisplay + `<span class="val-num">${value}</span>`;
             } else if (typeof value === 'boolean') {
-                contentStr = key !== null ? `"${key}": ${value}` : `${value}`;
-                contentStr = `<span class="val-bool">${contentStr}</span>`;
-                typeStr = 'BOOLEAN';
+                contentStr = keyDisplay + `<span class="val-bool">${value}</span>`;
             } else if (value === null) {
-                contentStr = key !== null ? `"${key}": null` : `null`;
-                contentStr = `<span class="val-null">${contentStr}</span>`;
-                typeStr = 'NULL';
+                contentStr = keyDisplay + `<span class="val-null">null</span>`;
             }
         }
 
         contentDiv.innerHTML = contentStr;
-        typeDiv.textContent = typeStr;
+        typeDiv.innerHTML = `<span class="type-icon type-icon-${typeClass}">${iconStr}</span><span>${typeStr}</span>`;
 
         nodeDiv.appendChild(contentDiv);
         nodeDiv.appendChild(typeDiv);
@@ -480,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (keys.length > 0) {
                 const childrenUl = document.createElement('ul');
                 keys.forEach(k => {
-                    const childLi = createGraphNode(value[k], isArray ? null : k, false);
+                    const childLi = createGraphNode(value[k], k, false, isArray);
                     childrenUl.appendChild(childLi);
                 });
                 li.appendChild(childrenUl);
