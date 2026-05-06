@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" rx="20" fill="#0f172a" />
+    
+    <!-- Left JSON Curly Brace -->
+    <path d="M 35 20 Q 20 20 20 35 Q 20 50 10 50 Q 20 50 20 65 Q 20 80 35 80" fill="none" stroke="#38bdf8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Right JSON Curly Brace -->
+    <path d="M 65 20 Q 80 20 80 35 Q 80 50 90 50 Q 80 50 80 65 Q 80 80 65 80" fill="none" stroke="#38bdf8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Tree Graph -->
+    <!-- Lines -->
+    <path d="M 50 36 L 40 59 M 50 36 L 60 59" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" opacity="0.6"/>
+    
+    <!-- Nodes -->
+    <circle cx="50" cy="30" r="7" fill="#a7f3d0" /> <!-- Green string -->
+    <circle cx="40" cy="65" r="7" fill="#f472b6" /> <!-- Pink boolean -->
+    <circle cx="60" cy="65" r="7" fill="#fdba74" /> <!-- Orange number -->
+</svg>
