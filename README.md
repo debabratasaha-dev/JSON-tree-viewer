@@ -16,24 +16,25 @@
 | | |
 |---|---|
 | 🌲 **List View** | Collapsible tree with syntax highlighting and per-type icons |
-| 🕸️ **Graph View** ⭐ | **Interactive org-chart — zoom, pan, and collapse nodes on the fly** |
+| 🕸️ **Graph View** ⭐ | **Interactive graph-chart — zoom, pan, and collapse nodes on the fly** |
 | 🎨 **Themes** | Light / Dark mode toggle |
 | 📁 **Input** | Paste JSON directly or upload a `.json` file |
 | ⚡ **Zero setup** | Just open `index.html` — works fully offline |
 
 ---
 
-## 🕸️ Interactive Graph View
+## 🕸️ Interactive Mindmap View
 
-The **Graph View** is what sets this project apart. Instead of a plain text tree, your JSON is rendered as a live, interactive heirarchical-graph-chart where:
+The **Graph View** is what sets this project apart. Instead of a plain text tree, your JSON is rendered as a live, interactive mindmap where:
 
 - Every object and array becomes a **clickable node** — click to expand or collapse its children
 - **Scroll to zoom** in and out (0.2× – 3×), or use the `+` / `−` buttons
-- **Click and drag** to pan freely across the entire graph canvas
-- Connector lines visually show the parent-child relationships between nodes
+- **Click and drag** to pan freely across the entire mindmap canvas
+- **Smooth curved connectors** visually show the parent-child relationships between nodes
 - Each node displays the **key name**, a **value summary**, and a **data type badge**
+- **Automatic centering** and responsive layout that adapts to your data structure
 
-It's built entirely with CSS `::before`/`::after` connectors and vanilla JS transforms — no canvas, no third-party graph library.
+It's built entirely with SVG connectors for crisp curves and vanilla JS transforms — no canvas, no third-party graph library.
 
 ---
 

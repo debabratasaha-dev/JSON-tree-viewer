@@ -22,6 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentScale = 1;
     let translateX = 0;
     let translateY = 0;
+    let currentMindmapRoot = null;
+    let graphNodeId = 0;
+    let hasRenderedMindmap = false;
+    let hasDraggedGraph = false;
+    let gestureStartScale = 1;
+    let zoomRefreshTimer = null;
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const MIN_GRAPH_SCALE = 0.2;
+    const MAX_GRAPH_SCALE = 3;
+    const USE_CRISP_GRAPH_ZOOM = 'zoom' in document.documentElement.style
+        || (window.CSS && CSS.supports && CSS.supports('zoom', '1'));
+    const MINDMAP_LAYOUT = {
+        margin: 72,
+        levelGap: 150,
+        siblingGap: 28
+    };
 
     // Theme Toggle Handler
     themeToggleBtn.addEventListener('click', () => {
@@ -54,33 +71,86 @@ document.addEventListener('DOMContentLoaded', () => {
         listContainer.classList.add('hidden');
         zoomInBtn.classList.remove('hidden');
         zoomOutBtn.classList.remove('hidden');
+        if (currentMindmapRoot) {
+            requestAnimationFrame(() => drawMindmap({ resetView: !hasRenderedMindmap }));
+        }
     });
 
     // Zoom Handlers
     function applyZoom() {
-        graphWrapper.style.transform = `translate(${translateX}px, ${translateY}px) scale(${currentScale})`;
+        const roundedTranslateX = Math.round(translateX);
+        const roundedTranslateY = Math.round(translateY);
+        const mindmapSurface = graphWrapper.querySelector('.mindmap-surface');
+
+        graphWrapper.style.transform = `translate3d(${roundedTranslateX}px, ${roundedTranslateY}px, 0)`;
+
+        if (!mindmapSurface) return;
+
+        if (USE_CRISP_GRAPH_ZOOM) {
+            mindmapSurface.style.zoom = currentScale;
+            mindmapSurface.style.transform = '';
+        } else {
+            mindmapSurface.style.zoom = '';
+            mindmapSurface.style.transform = `scale(${currentScale})`;
+        }
+    }
+
+    function clampScale(scale) {
+        return Math.min(Math.max(scale, MIN_GRAPH_SCALE), MAX_GRAPH_SCALE);
+    }
+
+    function setGraphScale(nextScale, originClientX = null, originClientY = null) {
+        const clampedScale = clampScale(nextScale);
+        const rect = graphContainer.getBoundingClientRect();
+        const originX = originClientX === null ? rect.width / 2 : originClientX - rect.left;
+        const originY = originClientY === null ? rect.height / 2 : originClientY - rect.top;
+        const graphX = (originX - translateX) / currentScale;
+        const graphY = (originY - translateY) / currentScale;
+
+        currentScale = clampedScale;
+        translateX = originX - graphX * currentScale;
+        translateY = originY - graphY * currentScale;
+        applyZoom();
+        scheduleGraphRefreshAfterZoom();
+    }
+
+    function scheduleGraphRefreshAfterZoom() {
+        if (currentView !== 'graph' || !currentMindmapRoot) return;
+
+        clearTimeout(zoomRefreshTimer);
+        zoomRefreshTimer = setTimeout(() => {
+            drawMindmap();
+            zoomRefreshTimer = null;
+        }, 120);
     }
 
     zoomInBtn.addEventListener('click', () => {
-        currentScale = Math.min(currentScale + 0.1, 3);
-        applyZoom();
+        setGraphScale(currentScale * 1.15);
     });
 
     zoomOutBtn.addEventListener('click', () => {
-        currentScale = Math.max(currentScale - 0.1, 0.2);
-        applyZoom();
+        setGraphScale(currentScale / 1.15);
     });
 
     graphContainer.addEventListener('wheel', (e) => {
-        if (currentView === 'graph') {
-            e.preventDefault();
-            if (e.deltaY < 0) {
-                currentScale = Math.min(currentScale + 0.05, 3);
-            } else {
-                currentScale = Math.max(currentScale - 0.05, 0.2);
-            }
-            applyZoom();
-        }
+        if (currentView !== 'graph') return;
+
+        e.preventDefault();
+        const zoomSpeed = e.ctrlKey || e.metaKey ? 0.008 : 0.0025;
+        const nextScale = currentScale * Math.exp(-e.deltaY * zoomSpeed);
+        setGraphScale(nextScale, e.clientX, e.clientY);
+    }, { passive: false });
+
+    graphContainer.addEventListener('gesturestart', (e) => {
+        if (currentView !== 'graph') return;
+        e.preventDefault();
+        gestureStartScale = currentScale;
+    }, { passive: false });
+
+    graphContainer.addEventListener('gesturechange', (e) => {
+        if (currentView !== 'graph') return;
+        e.preventDefault();
+        setGraphScale(gestureStartScale * e.scale, e.clientX, e.clientY);
     }, { passive: false });
 
     // Drag to Pan Handlers
@@ -89,8 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let initialTranslateX, initialTranslateY;
 
     graphContainer.addEventListener('mousedown', (e) => {
-        if (currentView !== 'graph') return;
+        if (currentView !== 'graph' || e.button !== 0) return;
         isDragging = true;
+        hasDraggedGraph = false;
         graphContainer.classList.add('grabbing');
         startX = e.pageX;
         startY = e.pageY;
@@ -106,6 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
     graphContainer.addEventListener('mouseup', () => {
         isDragging = false;
         graphContainer.classList.remove('grabbing');
+        setTimeout(() => {
+            hasDraggedGraph = false;
+        }, 0);
     });
 
     graphContainer.addEventListener('mousemove', (e) => {
@@ -116,6 +190,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const walkX = x - startX;
         const walkY = y - startY;
         
+        if (Math.abs(walkX) > 4 || Math.abs(walkY) > 4) {
+            hasDraggedGraph = true;
+        }
         translateX = initialTranslateX + walkX;
         translateY = initialTranslateY + walkY;
         applyZoom();
@@ -366,9 +443,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         carets.forEach(caret => caret.classList.add('expanded'));
 
-        if (graphWrapper) {
-            const graphUls = graphWrapper.querySelectorAll('ul.collapsed');
-            graphUls.forEach(ul => ul.classList.remove('collapsed'));
+        if (currentMindmapRoot) {
+            setMindmapCollapsed(currentMindmapRoot, false);
+            if (currentView === 'graph') {
+                drawMindmap();
+            }
         }
     });
     collapseAllBtn.addEventListener('click', () => {
@@ -399,138 +478,482 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         carets.forEach(caret => caret.classList.remove('expanded'));
 
-        if (graphWrapper) {
-            const graphUls = graphWrapper.querySelectorAll('.org-tree > ul ul');
-            graphUls.forEach(ul => ul.classList.add('collapsed'));
+        if (currentMindmapRoot) {
+            setMindmapCollapsed(currentMindmapRoot, true);
+            if (currentView === 'graph') {
+                drawMindmap();
+            }
         }
     });
 
     function renderGraph(data) {
-        graphWrapper.innerHTML = '';
-        const orgTreeDiv = document.createElement('div');
-        orgTreeDiv.className = 'org-tree';
-        const rootUl = document.createElement('ul');
-        const rootLi = createGraphNode(data, 'JSON File', true);
-        rootUl.appendChild(rootLi);
-        orgTreeDiv.appendChild(rootUl);
-        graphWrapper.appendChild(orgTreeDiv);
+        graphNodeId = 0;
+        currentMindmapRoot = buildMindmapNode(data, 'JSON File', true);
+        hasRenderedMindmap = false;
 
-        // Reset scale and translation on new render
         currentScale = 1;
         translateX = 0;
         translateY = 0;
         applyZoom();
+
+        if (currentView === 'graph') {
+            requestAnimationFrame(() => drawMindmap({ resetView: true }));
+        }
     }
 
-    function createGraphNode(value, key = null, isRoot = false, parentIsArray = false) {
-        const li = document.createElement('li');
-
-        const nodeDiv = document.createElement('div');
-        nodeDiv.className = 'graph-node';
-
-        const contentDiv = document.createElement('div');
-        contentDiv.className = 'node-content';
-
-        const typeDiv = document.createElement('div');
-        typeDiv.className = 'node-type';
-
+    function buildMindmapNode(value, key = null, isRoot = false, parentIsArray = false) {
         const isObject = typeof value === 'object' && value !== null;
         const isArray = Array.isArray(value);
+        const node = {
+            id: `mindmap-node-${++graphNodeId}`,
+            kind: isObject ? 'container' : 'value',
+            key,
+            value,
+            isRoot,
+            parentIsArray,
+            isArray,
+            rows: [],
+            branches: [],
+            layout: {}
+        };
 
-        let typeStr = '';
-        let iconStr = '';
-        let typeClass = '';
-
-        if (isArray) {
-            typeStr = 'ARRAY';
-            iconStr = '[]';
-            typeClass = 'array';
-        } else if (isObject) {
-            typeStr = 'OBJECT';
-            iconStr = '{}';
-            typeClass = 'object';
-        } else if (typeof value === 'string') {
-            typeStr = 'STRING';
-            iconStr = 'T';
-            typeClass = 'string';
-        } else if (typeof value === 'number') {
-            typeStr = 'NUMBER';
-            iconStr = '#';
-            typeClass = 'number';
-        } else if (typeof value === 'boolean') {
-            typeStr = 'BOOLEAN';
-            if (value === true) {
-                iconStr = `<svg width="14" height="8" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon-graph"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.4"/><circle cx="13" cy="5" r="3" fill="currentColor"/></svg>`;
-            } else {
-                iconStr = `<svg width="14" height="8" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon-graph"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.1"/><circle cx="5" cy="5" r="3" fill="currentColor" fill-opacity="0.5"/></svg>`;
-            }
-            typeClass = 'boolean';
-        } else if (value === null) {
-            typeStr = 'NULL';
-            iconStr = '∅';
-            typeClass = 'null';
+        if (!isObject) {
+            return node;
         }
 
-        let contentStr = '';
-        let keyDisplay = '';
+        Object.keys(value).forEach((childKey) => {
+            const childValue = value[childKey];
+            const row = {
+                key: childKey,
+                value: childValue,
+                rowIndex: node.rows.length,
+                branch: null
+            };
 
-        if (key !== null && !isRoot) {
-            if (parentIsArray) {
-                keyDisplay = `<span class="tree-key">${key} : </span>`;
-            } else {
-                keyDisplay = `<span class="tree-key">"${key}": </span>`;
+            if (canBranchInMindmap(childValue)) {
+                row.branch = {
+                    id: `${node.id}-branch-${row.rowIndex}`,
+                    rowIndex: row.rowIndex,
+                    collapsed: false,
+                    children: buildMindmapBranchChildren(childValue, childKey, isArray)
+                };
+                node.branches.push(row.branch);
             }
-        }
 
-        if (isRoot) {
-            contentStr = key || 'JSON File';
-            typeStr = isArray ? 'ARRAY' : (isObject ? 'OBJECT' : typeof value);
-        } else if (isArray) {
-            contentStr = keyDisplay + `[ ${value.length} Items ]`;
-            nodeDiv.classList.add('has-children');
-        } else if (isObject) {
-            const keys = Object.keys(value);
-            contentStr = keyDisplay + `{ ${keys.length} Keys }`;
-            nodeDiv.classList.add('has-children');
-        } else {
-            if (typeof value === 'string') {
-                const escaped = value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-                contentStr = keyDisplay + `<span class="val-string">"${escaped}"</span>`;
-            } else if (typeof value === 'number') {
-                contentStr = keyDisplay + `<span class="val-num">${value}</span>`;
-            } else if (typeof value === 'boolean') {
-                contentStr = keyDisplay + `<span class="val-bool">${value}</span>`;
-            } else if (value === null) {
-                contentStr = keyDisplay + `<span class="val-null">null</span>`;
-            }
-        }
+            node.rows.push(row);
+        });
 
-        contentDiv.innerHTML = contentStr;
-        typeDiv.innerHTML = `<span class="type-icon type-icon-${typeClass}">${iconStr}</span><span>${typeStr}</span>`;
-
-        nodeDiv.appendChild(contentDiv);
-        nodeDiv.appendChild(typeDiv);
-        li.appendChild(nodeDiv);
-
-        if (isObject) {
-            const keys = Object.keys(value);
-            if (keys.length > 0) {
-                const childrenUl = document.createElement('ul');
-                keys.forEach(k => {
-                    const childLi = createGraphNode(value[k], k, false, isArray);
-                    childrenUl.appendChild(childLi);
-                });
-                li.appendChild(childrenUl);
-
-                nodeDiv.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    childrenUl.classList.toggle('collapsed');
-                });
-            }
-        }
-
-        return li;
+        return node;
     }
+
+    function buildMindmapBranchChildren(value, key, parentIsArray) {
+        if (Array.isArray(value)) {
+            return Object.keys(value).map((childKey) => buildMindmapNode(value[childKey], childKey, false, true));
+        }
+
+        return [buildMindmapNode(value, key, false, parentIsArray)];
+    }
+
+    function canBranchInMindmap(value) {
+        return typeof value === 'object' && value !== null && Object.keys(value).length > 0;
+    }
+
+    function drawMindmap(options = {}) {
+        if (!currentMindmapRoot) return;
+
+        const { resetView = false } = options;
+        graphWrapper.innerHTML = '';
+
+        const surface = document.createElement('div');
+        surface.className = 'mindmap-surface';
+
+        const connectorSvg = document.createElementNS(SVG_NS, 'svg');
+        connectorSvg.classList.add('mindmap-connectors');
+
+        const nodesLayer = document.createElement('div');
+        nodesLayer.className = 'mindmap-nodes';
+
+        surface.appendChild(connectorSvg);
+        surface.appendChild(nodesLayer);
+        graphWrapper.appendChild(surface);
+
+        const elementMap = new Map();
+        appendMindmapNodes(currentMindmapRoot, nodesLayer, elementMap);
+        measureMindmap(currentMindmapRoot, elementMap);
+        computeMindmapLayout(currentMindmapRoot);
+        assignMindmapPositions(currentMindmapRoot, MINDMAP_LAYOUT.margin, MINDMAP_LAYOUT.margin);
+
+        const surfaceWidth = currentMindmapRoot.layout.subtreeWidth + MINDMAP_LAYOUT.margin * 2;
+        const surfaceHeight = currentMindmapRoot.layout.subtreeHeight + MINDMAP_LAYOUT.margin * 2;
+
+        surface.style.width = `${surfaceWidth}px`;
+        surface.style.height = `${surfaceHeight}px`;
+        connectorSvg.setAttribute('width', surfaceWidth);
+        connectorSvg.setAttribute('height', surfaceHeight);
+        connectorSvg.setAttribute('viewBox', `0 0 ${surfaceWidth} ${surfaceHeight}`);
+
+        positionMindmapNodes(currentMindmapRoot, elementMap);
+        drawMindmapConnectors(connectorSvg, currentMindmapRoot);
+
+        if (resetView) {
+            centerMindmap(surfaceWidth, surfaceHeight);
+        } else {
+            applyZoom();
+        }
+
+        hasRenderedMindmap = true;
+    }
+
+    function appendMindmapNodes(node, nodesLayer, elementMap) {
+        const nodeElement = createMindmapNodeElement(node);
+        nodesLayer.appendChild(nodeElement);
+        elementMap.set(node.id, nodeElement);
+
+        getVisibleMindmapLinks(node).forEach(({ child }) => {
+            appendMindmapNodes(child, nodesLayer, elementMap);
+        });
+    }
+
+    function createMindmapNodeElement(node) {
+        const nodeElement = document.createElement('div');
+        nodeElement.className = `mindmap-node mindmap-${node.kind} type-${getMindmapTypeClass(node.value)}`;
+        nodeElement.dataset.nodeId = node.id;
+
+        if (node.isRoot) {
+            nodeElement.classList.add('mindmap-root');
+        }
+
+        if (node.kind === 'value') {
+            nodeElement.appendChild(createMindmapTypeIcon(node.value));
+
+            const valueElement = document.createElement('span');
+            valueElement.className = 'mindmap-value-text';
+            valueElement.textContent = formatMindmapNodeValue(node);
+            nodeElement.appendChild(valueElement);
+            return nodeElement;
+        }
+
+        if (node.rows.length === 0) {
+            const emptyRow = document.createElement('div');
+            emptyRow.className = 'mindmap-row mindmap-empty-row';
+            emptyRow.textContent = node.isArray ? 'Empty array' : 'Empty object';
+            nodeElement.appendChild(emptyRow);
+            return nodeElement;
+        }
+
+        node.rows.forEach((row) => {
+            const rowElement = document.createElement('div');
+            rowElement.className = `mindmap-row type-${getMindmapTypeClass(row.value)}`;
+            rowElement.dataset.rowIndex = row.rowIndex;
+
+            rowElement.appendChild(createMindmapTypeIcon(row.value));
+
+            const keyElement = document.createElement('span');
+            keyElement.className = 'mindmap-key';
+            keyElement.textContent = `${formatMindmapKey(row.key, node.isArray)}:`;
+
+            const valueElement = document.createElement('span');
+            valueElement.className = 'mindmap-summary';
+            valueElement.textContent = formatMindmapSummary(row.value);
+
+            rowElement.appendChild(keyElement);
+            rowElement.appendChild(valueElement);
+
+            if (row.branch) {
+                rowElement.classList.add('is-branch');
+                rowElement.classList.toggle('is-collapsed', row.branch.collapsed);
+                rowElement.setAttribute('role', 'button');
+                rowElement.setAttribute('tabindex', '0');
+                rowElement.setAttribute('aria-expanded', String(!row.branch.collapsed));
+
+                const stateElement = document.createElement('span');
+                stateElement.className = 'mindmap-branch-state';
+                stateElement.textContent = row.branch.collapsed ? '+' : '-';
+                rowElement.appendChild(stateElement);
+
+                const toggleBranch = (event) => {
+                    event.stopPropagation();
+                    if (hasDraggedGraph) return;
+                    row.branch.collapsed = !row.branch.collapsed;
+                    drawMindmap();
+                };
+
+                rowElement.addEventListener('click', toggleBranch);
+                rowElement.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        toggleBranch(event);
+                    }
+                });
+            }
+
+            nodeElement.appendChild(rowElement);
+        });
+
+        return nodeElement;
+    }
+
+    function createMindmapTypeIcon(value) {
+        const typeClass = getMindmapTypeClass(value);
+        const typeLabel = getMindmapTypeLabel(value);
+        const badgeElement = document.createElement('span');
+        badgeElement.className = `mindmap-type-badge type-icon-${typeClass}`;
+        badgeElement.title = typeLabel;
+
+        const iconElement = document.createElement('span');
+        iconElement.className = 'type-icon mindmap-type-icon';
+        iconElement.setAttribute('aria-hidden', 'true');
+        iconElement.innerHTML = getMindmapTypeIconMarkup(value);
+
+        const labelElement = document.createElement('span');
+        labelElement.className = 'mindmap-type-label';
+        labelElement.textContent = typeLabel;
+
+        badgeElement.appendChild(iconElement);
+        badgeElement.appendChild(labelElement);
+        return badgeElement;
+    }
+
+    function measureMindmap(node, elementMap) {
+        const element = elementMap.get(node.id);
+        node.layout.width = element.offsetWidth || 220;
+        node.layout.height = element.offsetHeight || 80;
+        node.layout.rowAnchors = [];
+
+        if (node.kind === 'container') {
+            element.querySelectorAll('.mindmap-row').forEach((rowElement) => {
+                const rowIndex = Number(rowElement.dataset.rowIndex);
+                if (!Number.isNaN(rowIndex)) {
+                    node.layout.rowAnchors[rowIndex] = rowElement.offsetTop + rowElement.offsetHeight / 2;
+                }
+            });
+        }
+
+        getVisibleMindmapLinks(node).forEach(({ child }) => measureMindmap(child, elementMap));
+    }
+
+    function computeMindmapLayout(node) {
+        const visibleBranches = getVisibleMindmapBranches(node);
+
+        visibleBranches.forEach((branch) => {
+            branch.children.forEach((child) => computeMindmapLayout(child));
+        });
+
+        if (!visibleBranches.length) {
+            node.layout.nodeOffset = 0;
+            node.layout.subtreeHeight = node.layout.height;
+            node.layout.subtreeWidth = node.layout.width;
+            return;
+        }
+
+        let widestChild = 0;
+
+        visibleBranches.forEach((branch) => {
+            const childrenHeight = branch.children.reduce((total, child, index) => {
+                return total + child.layout.subtreeHeight + (index > 0 ? MINDMAP_LAYOUT.siblingGap : 0);
+            }, 0);
+
+            branch.layout = {
+                childrenHeight,
+                top: 0
+            };
+
+            branch.children.forEach((child) => {
+                widestChild = Math.max(widestChild, child.layout.subtreeWidth);
+            });
+        });
+
+        let previousBottom = Number.NEGATIVE_INFINITY;
+
+        visibleBranches.forEach((branch, index) => {
+            const sourceOffset = node.layout.rowAnchors[branch.rowIndex] || node.layout.height / 2;
+            const desiredTop = sourceOffset - branch.layout.childrenHeight / 2;
+            const top = index === 0
+                ? desiredTop
+                : Math.max(desiredTop, previousBottom + MINDMAP_LAYOUT.siblingGap);
+
+            branch.layout.top = top;
+            previousBottom = top + branch.layout.childrenHeight;
+        });
+
+        const minTop = Math.min(0, ...visibleBranches.map((branch) => branch.layout.top));
+        const nodeOffset = minTop < 0 ? Math.abs(minTop) : 0;
+        let subtreeHeight = nodeOffset + node.layout.height;
+
+        visibleBranches.forEach((branch) => {
+            branch.layout.top += nodeOffset;
+            subtreeHeight = Math.max(subtreeHeight, branch.layout.top + branch.layout.childrenHeight);
+        });
+
+        node.layout.nodeOffset = nodeOffset;
+        node.layout.subtreeHeight = subtreeHeight;
+        node.layout.subtreeWidth = node.layout.width + MINDMAP_LAYOUT.levelGap + widestChild;
+    }
+
+    function assignMindmapPositions(node, x, y) {
+        node.layout.x = x;
+        node.layout.y = y + (node.layout.nodeOffset || 0);
+
+        const visibleBranches = getVisibleMindmapBranches(node);
+        if (!visibleBranches.length) return;
+
+        const childX = x + node.layout.width + MINDMAP_LAYOUT.levelGap;
+
+        visibleBranches.forEach((branch) => {
+            let childY = y + branch.layout.top;
+
+            branch.children.forEach((child) => {
+                assignMindmapPositions(child, childX, childY);
+                childY += child.layout.subtreeHeight + MINDMAP_LAYOUT.siblingGap;
+            });
+        });
+    }
+
+    function positionMindmapNodes(node, elementMap) {
+        const element = elementMap.get(node.id);
+        element.style.left = `${node.layout.x}px`;
+        element.style.top = `${node.layout.y}px`;
+
+        getVisibleMindmapLinks(node).forEach(({ child }) => positionMindmapNodes(child, elementMap));
+    }
+
+    function drawMindmapConnectors(svg, node, drawnDots = new Set()) {
+        getVisibleMindmapLinks(node).forEach(({ branch, child }) => {
+            const sourceX = node.layout.x + node.layout.width;
+            const sourceY = node.layout.y + (node.layout.rowAnchors[branch.rowIndex] || node.layout.height / 2);
+            const targetX = child.layout.x;
+            const targetY = child.layout.y + child.layout.height / 2;
+            const distance = Math.max(1, targetX - sourceX);
+            const curve = Math.max(72, Math.min(150, distance * 0.48));
+
+            const path = document.createElementNS(SVG_NS, 'path');
+            path.classList.add('mindmap-link');
+            path.setAttribute('d', `M ${sourceX} ${sourceY} C ${sourceX + curve} ${sourceY}, ${targetX - curve} ${targetY}, ${targetX} ${targetY}`);
+            svg.appendChild(path);
+
+            if (!drawnDots.has(branch.id)) {
+                const dot = document.createElementNS(SVG_NS, 'circle');
+                dot.classList.add('mindmap-source-dot');
+                dot.setAttribute('cx', sourceX);
+                dot.setAttribute('cy', sourceY);
+                dot.setAttribute('r', '7');
+                svg.appendChild(dot);
+                drawnDots.add(branch.id);
+            }
+
+            drawMindmapConnectors(svg, child, drawnDots);
+        });
+    }
+
+    function getVisibleMindmapLinks(node) {
+        if (node.kind !== 'container') return [];
+
+        return node.branches.flatMap((branch) => {
+            if (branch.collapsed) return [];
+            return branch.children.map((child) => ({ branch, child }));
+        });
+    }
+
+    function getVisibleMindmapBranches(node) {
+        if (node.kind !== 'container') return [];
+        return node.branches.filter((branch) => !branch.collapsed && branch.children.length > 0);
+    }
+
+    function setMindmapCollapsed(node, collapsed) {
+        if (!node || node.kind !== 'container') return;
+
+        node.branches.forEach((branch) => {
+            branch.collapsed = collapsed;
+            branch.children.forEach((child) => setMindmapCollapsed(child, collapsed));
+        });
+    }
+
+    function centerMindmap(surfaceWidth, surfaceHeight) {
+        const containerWidth = graphContainer.clientWidth || surfaceWidth;
+        const containerHeight = graphContainer.clientHeight || surfaceHeight;
+
+        translateX = Math.max(32, (containerWidth - surfaceWidth * currentScale) / 2);
+        translateY = Math.max(32, (containerHeight - surfaceHeight * currentScale) / 2);
+        applyZoom();
+    }
+
+    function formatMindmapKey(key, parentIsArray) {
+        return parentIsArray ? `[${key}]` : key;
+    }
+
+    function formatMindmapNodeValue(node) {
+        const summary = formatMindmapSummary(node.value);
+
+        if (node.isRoot) {
+            return `${node.key}: ${summary}`;
+        }
+
+        if (node.parentIsArray) {
+            return summary;
+        }
+
+        return `${node.key}: ${summary}`;
+    }
+
+    function formatMindmapSummary(value) {
+        if (Array.isArray(value)) {
+            return `[${value.length} ${value.length === 1 ? 'item' : 'items'}]`;
+        }
+
+        if (typeof value === 'object' && value !== null) {
+            return '{}';
+        }
+
+        if (typeof value === 'string') {
+            return value;
+        }
+
+        if (value === null) {
+            return 'null';
+        }
+
+        return String(value);
+    }
+
+    function getMindmapTypeClass(value) {
+        if (Array.isArray(value)) return 'array';
+        if (typeof value === 'object' && value !== null) return 'object';
+        if (typeof value === 'string') return 'string';
+        if (typeof value === 'number') return 'number';
+        if (typeof value === 'boolean') return 'boolean';
+        if (value === null) return 'null';
+        return 'unknown';
+    }
+
+    function getMindmapTypeLabel(value) {
+        if (Array.isArray(value)) return 'Array';
+        if (typeof value === 'object' && value !== null) return 'Object';
+        if (typeof value === 'string') return 'String';
+        if (typeof value === 'number') return 'Number';
+        if (typeof value === 'boolean') return 'Boolean';
+        if (value === null) return 'Null';
+        return 'Unknown';
+    }
+
+    function getMindmapTypeIconMarkup(value) {
+        if (Array.isArray(value)) return '[]';
+        if (typeof value === 'object' && value !== null) return '{}';
+        if (typeof value === 'string') return 'T';
+        if (typeof value === 'number') return '#';
+        if (typeof value === 'boolean') {
+            return value
+                ? '<svg width="18" height="10" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon-graph"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.4"/><circle cx="13" cy="5" r="3" fill="currentColor"/></svg>'
+                : '<svg width="18" height="10" viewBox="0 0 18 10" fill="none" xmlns="http://www.w3.org/2000/svg" class="toggle-icon-graph"><rect width="18" height="10" rx="5" fill="currentColor" fill-opacity="0.1"/><circle cx="5" cy="5" r="3" fill="currentColor" fill-opacity="0.5"/></svg>';
+        }
+        if (value === null) return '&empty;';
+        return '?';
+    }
+
+    window.addEventListener('resize', () => {
+        if (currentView === 'graph' && currentMindmapRoot) {
+            drawMindmap();
+        }
+    });
 
     // Initial render with a sample
     jsonInput.value = JSON.stringify({

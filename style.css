@@ -510,11 +510,14 @@ button {
     width: 100%;
     height: 100%;
     overflow: hidden;
-    /* Changed to hidden since we translate now */
     position: relative;
     cursor: grab;
     user-select: none;
     -webkit-user-select: none;
+    background:
+        radial-gradient(circle at 34% 42%, rgba(112, 10, 64, 0.26), transparent 36%),
+        radial-gradient(circle at 75% 55%, rgba(49, 9, 46, 0.24), transparent 32%);
+    touch-action: none;
 }
 
 #graph-container.grabbing {
@@ -522,173 +525,269 @@ button {
 }
 
 .graph-wrapper {
-    transform-origin: top center;
-    transition: transform 0.1s;
-    min-width: 100%;
-    min-height: 100%;
-    display: flex;
-    justify-content: center;
-    padding-top: 2rem;
-    padding-bottom: 4rem;
-}
-
-/* Org Chart Tree Layout */
-.org-tree {
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.org-tree ul {
-    padding-top: 20px;
+    transform-origin: 0 0;
+    min-width: max-content;
+    min-height: max-content;
     position: relative;
-    display: flex;
-    justify-content: center;
-    list-style-type: none;
-    padding-left: 0;
 }
 
-.org-tree ul.collapsed {
-    display: none;
-}
-
-.org-tree li {
-    float: left;
-    text-align: center;
-    position: relative;
-    padding: 20px 5px 0 5px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-/* Connectors */
-.org-tree li::before,
-.org-tree li::after {
-    content: '';
+.mindmap-surface,
+.mindmap-nodes,
+.mindmap-connectors {
     position: absolute;
-    top: 0;
-    right: 50%;
-    border-top: 2px solid #22c55e;
-    /* Green matching user image */
-    width: 50%;
-    height: 20px;
+    inset: 0;
 }
 
-.org-tree li::after {
-    right: auto;
-    left: 50%;
-    border-left: 2px solid #22c55e;
+.mindmap-surface {
+    font-family: 'Fira Code', monospace;
+    transform-origin: 0 0;
 }
 
-/* Remove left connector from first child and right from last child */
-.org-tree li:only-child::after,
-.org-tree li:only-child::before {
-    display: none;
+.mindmap-connectors {
+    overflow: visible;
+    pointer-events: none;
 }
 
-.org-tree li:only-child {
-    padding-top: 0;
+.mindmap-link {
+    fill: none;
+    stroke: rgba(214, 203, 177, 0.9);
+    stroke-width: 3;
+    stroke-linecap: round;
 }
 
-.org-tree li:first-child::before,
-.org-tree li:last-child::after {
-    border: 0 none;
+.mindmap-source-dot {
+    fill: #c9b8ff;
+    stroke: var(--bg-color);
+    stroke-width: 2;
 }
 
-/* Add back connector vertical line to first and last */
-.org-tree li:last-child::before {
-    border-right: 2px solid #22c55e;
-    border-radius: 0 5px 0 0;
-}
-
-.org-tree li:first-child::after {
-    border-radius: 5px 0 0 0;
-}
-
-/* Downward line from parent */
-.org-tree ul::before {
-    content: '';
+.mindmap-node {
     position: absolute;
-    top: 0;
-    left: 50%;
-    border-left: 2px solid #22c55e;
-    width: 0;
-    height: 20px;
-    margin-left: -1px;
-}
-
-/* Remove downward line for the root ul */
-.org-tree>ul::before {
-    display: none;
-}
-
-/* Graph Nodes */
-.graph-node {
-    border: 2px solid #22c55e;
+    border: 3px solid #a997d8;
     border-radius: 8px;
-    /* Rectangular with border-radius */
-    padding: 8px 16px;
-    background: var(--bg-color);
-    color: var(--text-primary);
-    display: inline-block;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 6px -1px var(--shadow-color);
-    min-width: 120px;
+    color: #e8ddff;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.42);
+    overflow: hidden;
 }
 
-.graph-node:hover {
-    background: rgba(34, 197, 94, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 10px -1px var(--shadow-color);
+.mindmap-container {
+<<<<<<< Updated upstream
+    width: 340px;
+=======
+    width: max-content;
+    min-width: 360px;
+    max-width: 760px;
+>>>>>>> Stashed changes
+    background:
+        linear-gradient(135deg, rgba(35, 21, 58, 0.98), rgba(21, 27, 51, 0.98));
 }
 
-.graph-node.has-children {
-    border-width: 3px;
+.mindmap-root {
+<<<<<<< Updated upstream
+    width: 420px;
 }
 
-.graph-node .node-content {
-    font-weight: 600;
-    font-size: 0.95rem;
-    margin-bottom: 4px;
-    word-break: break-word;
-    max-width: 250px;
-}
-
-.graph-node .node-type {
-    font-size: 0.7rem;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    display: flex;
+.mindmap-value {
+    min-width: 190px;
+    max-width: 320px;
+    min-height: 78px;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    padding: 1rem 1.5rem;
+    background:
+        linear-gradient(135deg, rgba(58, 13, 58, 0.96), rgba(42, 21, 72, 0.96));
+    text-align: center;
+=======
+    min-width: 460px;
+    max-width: 820px;
 }
 
-.graph-node .node-type .type-icon {
-    font-size: 0.75rem;
+.mindmap-value {
+    min-width: 240px;
+    max-width: 620px;
+    min-height: 78px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 1rem 1.5rem;
+    background:
+        linear-gradient(135deg, rgba(58, 13, 58, 0.96), rgba(42, 21, 72, 0.96));
+    text-align: left;
+>>>>>>> Stashed changes
+    gap: 0.65rem;
+}
+
+.mindmap-row {
+    display: grid;
+<<<<<<< Updated upstream
+    grid-template-columns: minmax(5.4rem, auto) minmax(0, auto) minmax(0, 1fr) auto;
+=======
+    grid-template-columns: max-content max-content minmax(14rem, 1fr) auto;
+>>>>>>> Stashed changes
+    gap: 0.65rem;
+    align-items: center;
+    min-height: 46px;
+    padding: 0.65rem 1.55rem 0.65rem 1.2rem;
+    border-bottom: 1px solid rgba(201, 184, 255, 0.16);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.mindmap-row:last-child {
+    border-bottom: 0;
+}
+
+.mindmap-row.is-branch {
+    cursor: pointer;
+}
+
+.mindmap-row.is-branch:hover,
+.mindmap-row.is-branch:focus {
+    background: rgba(201, 184, 255, 0.08);
+    outline: none;
+}
+
+.mindmap-key {
+    color: #f1e6c8;
+    min-width: 0;
+<<<<<<< Updated upstream
+    overflow-wrap: anywhere;
+=======
+    max-width: 16rem;
+    overflow-wrap: break-word;
+    word-break: normal;
+>>>>>>> Stashed changes
+}
+
+.mindmap-summary,
+.mindmap-value-text {
+    min-width: 0;
+<<<<<<< Updated upstream
+    overflow-wrap: anywhere;
+=======
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+    hyphens: auto;
+>>>>>>> Stashed changes
+}
+
+.mindmap-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.18rem;
+    min-width: 0;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.mindmap-type-badge .mindmap-type-icon {
+    flex: 0 0 1rem;
+    width: 1rem;
     height: 1rem;
     line-height: 1rem;
-    margin-right: 0.3rem;
+    margin-right: 0;
 }
 
-/* Primitive Value Colors in Graph */
-.graph-node .val-string {
+.mindmap-type-badge .mindmap-type-icon svg {
+    display: block;
+}
+
+.mindmap-type-label {
+    overflow-wrap: normal;
+    white-space: nowrap;
+}
+
+.mindmap-value-text {
+    font-size: 1.1rem;
+    font-weight: 800;
+    line-height: 1.35;
+}
+
+.mindmap-branch-state {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.15rem;
+    height: 1.15rem;
+    border: 1px solid rgba(201, 184, 255, 0.5);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    line-height: 1;
+    color: #e8ddff;
+}
+
+.mindmap-row.is-collapsed .mindmap-branch-state {
+    background: rgba(201, 184, 255, 0.14);
+}
+
+.mindmap-empty-row {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.mindmap-row.type-string .mindmap-summary,
+.mindmap-value.type-string .mindmap-value-text {
     color: var(--syntax-string);
 }
 
-.graph-node .val-num {
+.mindmap-row.type-number .mindmap-summary,
+.mindmap-value.type-number .mindmap-value-text {
     color: var(--syntax-number);
 }
 
-.graph-node .val-bool {
+.mindmap-row.type-boolean .mindmap-summary,
+.mindmap-value.type-boolean .mindmap-value-text {
     color: var(--syntax-boolean);
 }
 
-.graph-node .val-null {
+.mindmap-row.type-null .mindmap-summary,
+.mindmap-value.type-null .mindmap-value-text {
     color: var(--syntax-null);
     font-style: italic;
+}
+
+body.light-mode #graph-container {
+    background:
+        radial-gradient(circle at 34% 42%, rgba(99, 102, 241, 0.12), transparent 36%),
+        radial-gradient(circle at 75% 55%, rgba(14, 165, 233, 0.1), transparent 32%);
+}
+
+body.light-mode .mindmap-node {
+    border-color: #64748b;
+    color: #0f172a;
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+}
+
+body.light-mode .mindmap-container {
+    background: rgba(255, 255, 255, 0.94);
+}
+
+body.light-mode .mindmap-value {
+    background: rgba(238, 242, 255, 0.96);
+}
+
+body.light-mode .mindmap-link {
+    stroke: rgba(71, 85, 105, 0.72);
+}
+
+body.light-mode .mindmap-source-dot {
+    fill: #64748b;
+    stroke: #f8fafc;
+}
+
+body.light-mode .mindmap-row {
+    border-bottom-color: rgba(100, 116, 139, 0.18);
+}
+
+body.light-mode .mindmap-key,
+body.light-mode .mindmap-branch-state {
+    color: #0f172a;
 }
 
 /* Type Icons and Pills for List View */
