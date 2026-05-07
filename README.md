@@ -2,9 +2,9 @@
 
 # 🌳 JSON Tree Viewer
 
-**Visualize JSON data as an interactive tree or hierarchical graph — right in your browser.**
+**Paste in any JSON and instantly explore it as a collapsible tree or a live, pannable graph — no install, no build step.**
 
-[![Live](https://img.shields.io/badge/Live%20Demo-Visit%20Site-6366f1?style=for-the-badge&logo=github)](https://debabratasaha-dev.github.io/JSON-tree-viewer/)
+[![Live](https://img.shields.io/badge/Live-Visit%20Site-6366f1?style=for-the-badge&logo=github)](https://debabratasaha-dev.github.io/JSON-tree-viewer/)
 ![No Dependencies](https://img.shields.io/badge/Dependencies-None-22c55e?style=for-the-badge)
 
 </div>
@@ -15,11 +15,25 @@
 
 | | |
 |---|---|
-| 🌲 **List View** | Collapsible tree with syntax highlighting and type icons |
-| 🕸️ **Graph View** | Zoomable org-chart — scroll to zoom, drag to pan, click to collapse |
+| 🌲 **List View** | Collapsible tree with syntax highlighting and per-type icons |
+| 🕸️ **Graph View** ⭐ | **Interactive org-chart — zoom, pan, and collapse nodes on the fly** |
 | 🎨 **Themes** | Light / Dark mode toggle |
 | 📁 **Input** | Paste JSON directly or upload a `.json` file |
 | ⚡ **Zero setup** | Just open `index.html` — works fully offline |
+
+---
+
+## 🕸️ Interactive Graph View
+
+The **Graph View** is what sets this project apart. Instead of a plain text tree, your JSON is rendered as a live, interactive heirarchical-graph-chart where:
+
+- Every object and array becomes a **clickable node** — click to expand or collapse its children
+- **Scroll to zoom** in and out (0.2× – 3×), or use the `+` / `−` buttons
+- **Click and drag** to pan freely across the entire graph canvas
+- Connector lines visually show the parent-child relationships between nodes
+- Each node displays the **key name**, a **value summary**, and a **data type badge**
+
+It's built entirely with CSS `::before`/`::after` connectors and vanilla JS transforms — no canvas, no third-party graph library.
 
 ---
 
