@@ -16,25 +16,26 @@
 | | |
 |---|---|
 | 🌲 **List View** | Collapsible tree with syntax highlighting and per-type icons |
-| 🕸️ **Graph View** ⭐ | **Interactive graph-chart — zoom, pan, and collapse nodes on the fly** |
+| 🕸️ **Graph View** ⭐ | **Responsive mindmap — wheel zoom, pinch zoom, pan, and collapse branches on the fly** |
 | 🎨 **Themes** | Light / Dark mode toggle |
 | 📁 **Input** | Paste JSON directly or upload a `.json` file |
 | ⚡ **Zero setup** | Just open `index.html` — works fully offline |
 
 ---
 
-## 🕸️ Interactive Mindmap View
+## Interactive Mindmap Graph View
 
-The **Graph View** is what sets this project apart. Instead of a plain text tree, your JSON is rendered as a live, interactive mindmap where:
+The **Graph View** renders JSON as a responsive mindmap where nested data is shown as connected cards instead of an org chart:
 
-- Every object and array becomes a **clickable node** — click to expand or collapse its children
-- **Scroll to zoom** in and out (0.2× – 3×), or use the `+` / `−` buttons
-- **Click and drag** to pan freely across the entire mindmap canvas
-- **Smooth curved connectors** visually show the parent-child relationships between nodes
-- Each node displays the **key name**, a **value summary**, and a **data type badge**
-- **Automatic centering** and responsive layout that adapts to your data structure
+- Objects and arrays become clickable branches that expand or collapse their children
+- Mouse wheel, trackpad pinch, touch pinch, and the `+` / `-` buttons zoom from 0.2x to 3x
+- Mouse drag and touch drag pan freely across the mindmap canvas
+- Smooth SVG connector curves show parent-child relationships between cards
+- Each row shows the key name, value summary, datatype icon, and datatype name
+- Graph cards resize for long strings and adapt to mobile screens without changing the data details
+- The graph redraws after zooming so text remains crisp
 
-It's built entirely with SVG connectors for crisp curves and vanilla JS transforms — no canvas, no third-party graph library.
+It is built with positioned DOM cards, SVG connector curves, and vanilla JavaScript transforms - no canvas, no third-party graph library.
 
 ---
 

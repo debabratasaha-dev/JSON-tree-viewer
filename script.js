@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomInBtn.classList.remove('hidden');
         zoomOutBtn.classList.remove('hidden');
         if (currentMindmapRoot) {
-            requestAnimationFrame(() => drawMindmap({ resetView: !hasRenderedMindmap }));
+            requestAnimationFrame(() => drawMindmap({ resetView: !hasRenderedMindmap || isMobileGraphViewport() }));
         }
     });
 
@@ -97,6 +97,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function clampScale(scale) {
         return Math.min(Math.max(scale, MIN_GRAPH_SCALE), MAX_GRAPH_SCALE);
+    }
+
+    function isMobileGraphViewport() {
+        return window.matchMedia('(max-width: 640px)').matches;
     }
 
     function setGraphScale(nextScale, originClientX = null, originClientY = null) {
@@ -197,6 +201,96 @@ document.addEventListener('DOMContentLoaded', () => {
         translateY = initialTranslateY + walkY;
         applyZoom();
     });
+
+    let isTouchDragging = false;
+    let touchStartDistance = 0;
+    let touchWasPinch = false;
+
+    function getTouchDistance(touches) {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.hypot(dx, dy);
+    }
+
+    function getTouchCenter(touches) {
+        return {
+            x: (touches[0].clientX + touches[1].clientX) / 2,
+            y: (touches[0].clientY + touches[1].clientY) / 2
+        };
+    }
+
+    graphContainer.addEventListener('touchstart', (e) => {
+        if (currentView !== 'graph') return;
+
+        if (e.touches.length === 1) {
+            const touch = e.touches[0];
+            isTouchDragging = true;
+            touchWasPinch = false;
+            hasDraggedGraph = false;
+            graphContainer.classList.add('grabbing');
+            startX = touch.pageX;
+            startY = touch.pageY;
+            initialTranslateX = translateX;
+            initialTranslateY = translateY;
+        } else if (e.touches.length === 2) {
+            isTouchDragging = false;
+            touchWasPinch = true;
+            touchStartDistance = getTouchDistance(e.touches);
+            gestureStartScale = currentScale;
+        }
+
+        e.preventDefault();
+    }, { passive: false });
+
+    graphContainer.addEventListener('touchmove', (e) => {
+        if (currentView !== 'graph') return;
+
+        if (e.touches.length === 1 && isTouchDragging) {
+            const touch = e.touches[0];
+            const walkX = touch.pageX - startX;
+            const walkY = touch.pageY - startY;
+
+            if (Math.abs(walkX) > 4 || Math.abs(walkY) > 4) {
+                hasDraggedGraph = true;
+            }
+
+            translateX = initialTranslateX + walkX;
+            translateY = initialTranslateY + walkY;
+            applyZoom();
+        } else if (e.touches.length === 2 && touchStartDistance > 0) {
+            touchWasPinch = true;
+            const center = getTouchCenter(e.touches);
+            const nextScale = gestureStartScale * (getTouchDistance(e.touches) / touchStartDistance);
+            setGraphScale(nextScale, center.x, center.y);
+        }
+
+        e.preventDefault();
+    }, { passive: false });
+
+    function finishTouchInteraction(e) {
+        if (e.touches && e.touches.length > 0) return;
+
+        if (!hasDraggedGraph && !touchWasPinch && e.changedTouches && e.changedTouches.length > 0) {
+            const touch = e.changedTouches[0];
+            const tappedElement = document.elementFromPoint(touch.clientX, touch.clientY);
+            const branchRow = tappedElement?.closest?.('.mindmap-row.is-branch');
+
+            if (branchRow && graphContainer.contains(branchRow)) {
+                branchRow.click();
+            }
+        }
+
+        isTouchDragging = false;
+        touchStartDistance = 0;
+        touchWasPinch = false;
+        graphContainer.classList.remove('grabbing');
+        setTimeout(() => {
+            hasDraggedGraph = false;
+        }, 0);
+    }
+
+    graphContainer.addEventListener('touchend', finishTouchInteraction);
+    graphContainer.addEventListener('touchcancel', finishTouchInteraction);
 
     // File Upload Handler
     fileInput.addEventListener('change', (e) => {
@@ -872,6 +966,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const containerWidth = graphContainer.clientWidth || surfaceWidth;
         const containerHeight = graphContainer.clientHeight || surfaceHeight;
 
+        if (isMobileGraphViewport()) {
+            const rootOffsetX = currentMindmapRoot?.layout?.x || MINDMAP_LAYOUT.margin;
+            const rootOffsetY = currentMindmapRoot?.layout?.y || MINDMAP_LAYOUT.margin;
+
+            translateX = Math.max(12, Math.min(24, containerWidth * 0.04)) - rootOffsetX * currentScale;
+            translateY = Math.max(12, Math.min(24, containerHeight * 0.04)) - rootOffsetY * currentScale;
+            applyZoom();
+            return;
+        }
+
         translateX = Math.max(32, (containerWidth - surfaceWidth * currentScale) / 2);
         translateY = Math.max(32, (containerHeight - surfaceHeight * currentScale) / 2);
         applyZoom();
@@ -951,7 +1055,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('resize', () => {
         if (currentView === 'graph' && currentMindmapRoot) {
-            drawMindmap();
+            drawMindmap({ resetView: isMobileGraphViewport() });
         }
     });
 
